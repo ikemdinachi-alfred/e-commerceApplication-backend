@@ -1,16 +1,26 @@
 package com.alfredtech.ecormerceapplication.implimentation;
 
+import com.alfredtech.ecormerceapplication.dto.requests.RegisterUserRequest;
+import com.alfredtech.ecormerceapplication.dto.requests.UserRequest;
+import com.alfredtech.ecormerceapplication.exceptions.UserExistException;
 import com.alfredtech.ecormerceapplication.model.AppUser;
 import com.alfredtech.ecormerceapplication.repository.userRepository.UserRepository;
 import com.alfredtech.ecormerceapplication.service.UserService;
+import com.alfredtech.ecormerceapplication.util.ApiResponse;
+import com.alfredtech.ecormerceapplication.util.GenerateApiResponse;
+import com.alfredtech.ecormerceapplication.util.Mapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+
+import static com.alfredtech.ecormerceapplication.util.ApiResponse.create;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +28,8 @@ import java.util.List;
 @Slf4j
 public class UserImplementationService implements UserService {
     private final UserRepository userRepository;
+    @Autowired
+    private AppUser appUser;
 
     private void validateUser(String token){
         String decodeToken = decryptPassword(token);
@@ -38,7 +50,7 @@ public class UserImplementationService implements UserService {
         String userEmail = decodeToken.substring(0,beforeTheDot);
         log.info(userEmail+"      ^^^^^^^^^^^^^^ this is user email <<<<<<<<<<<<<<<<<<<<");
         String role = decodeToken.substring(beforeTheDot);
-        log.info(role+"  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< this role");
+        log.info(role+"  <<<<<<<<<<<<<<<<<<<<<<<<<<<< this role");
         AppUser foundAppUser = findByEmail(userEmail);
         if (!foundAppUser.getRole().name().equalsIgnoreCase("ADMIN"))
             throw new RuntimeException("only admin can access this end point");
@@ -84,9 +96,25 @@ public class UserImplementationService implements UserService {
         return userRepository.findAll();
     }
 
+
+
+
+
     @Override
-    public String bookRoom(String token, int money) {
-        validateUser(token);
-        return null;
+        public ApiResponse registerAdminUser(RegisterUserRequest registerUserRegister) throws UserExistException {
+        if (checkIfUserExist(registerUserRegister.getPassword()))
+            throw  new UserExistException(GenerateApiResponse.USER_ALREADY_EXIST);
+        AppUser appUser = Mapper.map(registerUserRegister,AppUser.class);
+        userRepository.save(appUser);
+        return ApiResponse.create(GenerateApiResponse.USER_SUCCESSFULLY_REGISTERED);
+
     }
+
+    private boolean checkIfUserExist(String email){
+        AppUser  appUser = userRepository.findByEmailAddress(email);
+        return appUser != null;
+
+    }
+
+
 }

@@ -1,6 +1,9 @@
 package com.alfredtech.ecormerceapplication.service;
 
+import com.alfredtech.ecormerceapplication.dto.requests.RegisterUserRequest;
+import com.alfredtech.ecormerceapplication.exceptions.UserExistException;
 import com.alfredtech.ecormerceapplication.model.AppUser;
+import com.alfredtech.ecormerceapplication.util.ApiResponse;
 
 import java.util.List;
 
@@ -11,5 +14,5 @@ public interface UserService {
 
     List<AppUser> findAllUser(String token);
 
-    String bookRoom(String token, int money);
+    ApiResponse registerAdminUser(RegisterUserRequest registerUserRegister) throws UserExistException;
 }
